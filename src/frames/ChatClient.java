@@ -6,13 +6,16 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class ChatClient extends JFrame {
-    private static final String SERVER_IP = "127.0.0.1";
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	private static final String SERVER_IP = "127.0.0.1";
     private static final int SERVER_PORT = 8888;
     private static DataOutputStream dataOutputStream = null;
 
@@ -24,18 +27,11 @@ public class ChatClient extends JFrame {
     private JTextField messageField;
     private String nickname;
     private JButton sendFileButton;
+    
+    
 
     public ChatClient() {
-        // Prompt user for a nickname
-        while (true) {
-            this.nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
-            if (isValidNickname(nickname)) {
-                break;
-            } else {
-                JOptionPane.showMessageDialog(this, "Invalid nickname. Please choose a different one.");
-            }
-        }
-
+    	
         setTitle("Chat Client");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 300);
@@ -47,8 +43,13 @@ public class ChatClient extends JFrame {
         JScrollPane scrollPane = new JScrollPane(chatArea);
         add(scrollPane, BorderLayout.CENTER);
 
-        messageField = new JTextField();
+        messageField = new PlaceholderTextField("message");
         JButton sendButton = new JButton("Send");
+        sendButton.setFont(new Font("Arial", Font.BOLD, 14));
+        sendButton.setForeground(Color.WHITE);
+        sendButton.setBackground(new Color(52, 152, 219)); // Use a cool color
+        sendButton.setFocusPainted(false);
+        sendButton.setBorderPainted(false);
         sendButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -57,6 +58,11 @@ public class ChatClient extends JFrame {
         });
 
         sendFileButton = new JButton("Send File");
+        sendFileButton.setFont(new Font("Arial", Font.BOLD, 14));
+        sendFileButton.setForeground(Color.WHITE);
+        sendFileButton.setBackground(new Color(52, 152, 219)); // Use a cool color
+        sendFileButton.setFocusPainted(false);
+        sendFileButton.setBorderPainted(false);
         sendFileButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -67,20 +73,12 @@ public class ChatClient extends JFrame {
         JPanel inputPanel = new JPanel(new BorderLayout());
         inputPanel.add(messageField, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);
+        inputPanel.add(sendFileButton,BorderLayout.WEST);
         add(inputPanel, BorderLayout.SOUTH);
-
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(sendFileButton);
-
-        add(buttonPanel, BorderLayout.NORTH);
 
         connectToServer();
 
         setVisible(true);
-    }
-
-    private boolean isValidNickname(String nickname) {
-        return !nickname.trim().isEmpty();
     }
 
     private void connectToServer() {
@@ -90,7 +88,14 @@ public class ChatClient extends JFrame {
             inputStream = new Scanner(socket.getInputStream());
             
             dataOutputStream = new DataOutputStream(socket.getOutputStream());
-
+            
+            while (true) {
+                this.nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
+                if (!nickname.trim().isEmpty()) {
+                        break;
+                }
+                else JOptionPane.showMessageDialog(this, "Already exists. Please choose a different one.");
+            }
 
             // Send the chosen nickname to the server
             outputStream.println(nickname);
@@ -109,12 +114,17 @@ public class ChatClient extends JFrame {
             e.printStackTrace();
         }
     }
-
     private void sendMessage() {
-        String message = messageField.getText();
-        outputStream.println(nickname + ": " + message);
-        messageField.setText("");
+        String message = messageField.getText().trim();
+
+        if (!message.isEmpty() && !message.equalsIgnoreCase("message")) {
+            outputStream.println(message);
+            messageField.setText("");
+        } else {
+            JOptionPane.showMessageDialog(this, "Invalid message. Please enter a valid message.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
+
 
     private void chooseAndSendFile() {
         JFileChooser fileChooser = new JFileChooser();

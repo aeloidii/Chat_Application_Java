@@ -6,7 +6,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
+
+import javax.swing.JOptionPane;
 
 public class ChatServer {
     private static final int PORT = 8888;
@@ -22,8 +23,9 @@ public class ChatServer {
                 System.out.println("New connection: " + clientSocket);
 
                 // Prompt user for a nickname
-                String nickname = new Scanner(clientSocket.getInputStream()).nextLine();
+                String nickname = new java.util.Scanner(clientSocket.getInputStream()).nextLine();
 
+                
                 ClientHandler clientHandler = new ClientHandler(clientSocket, clients, nickname);
                 clients.add(clientHandler);
                 new Thread(clientHandler).start();

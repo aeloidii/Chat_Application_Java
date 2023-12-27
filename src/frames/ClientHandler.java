@@ -33,6 +33,9 @@ public class ClientHandler implements Runnable {
             e.printStackTrace();
         }
     }
+    public String getNickname() {
+        return nickname;
+    }
 
     @Override
     public void run() {
@@ -58,7 +61,7 @@ public class ClientHandler implements Runnable {
                         e.printStackTrace();
                     }
                 } else {
-                    broadcast(nickname + ": " + message);
+                	broadcast(nickname + ": " +message);
                 }
             }
         } finally {

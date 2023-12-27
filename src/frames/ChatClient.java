@@ -31,6 +31,13 @@ public class ChatClient extends JFrame {
     
 
     public ChatClient() {
+    	while (true) {
+            this.nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
+            if (!nickname.trim().isEmpty()) {
+                    break;
+            }
+            else JOptionPane.showMessageDialog(this, "Already exists. Please choose a different one.");
+        }
     	
         setTitle("Chat Client");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -86,34 +93,54 @@ public class ChatClient extends JFrame {
             socket = new Socket(SERVER_IP, SERVER_PORT);
             outputStream = new PrintWriter(socket.getOutputStream(), true);
             inputStream = new Scanner(socket.getInputStream());
-            
+
             dataOutputStream = new DataOutputStream(socket.getOutputStream());
-            
-            while (true) {
-                this.nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
-                if (!nickname.trim().isEmpty()) {
-                        break;
-                }
-                else JOptionPane.showMessageDialog(this, "Already exists. Please choose a different one.");
-            }
 
             // Send the chosen nickname to the server
             outputStream.println(nickname);
 
-            // Start the thread to listen for incoming messages
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    while (inputStream.hasNextLine()) {
-                        String message = inputStream.nextLine();
-                        SwingUtilities.invokeLater(() -> chatArea.append(message + "\n"));
+            // Wait for the server's response
+            if (inputStream.hasNextLine()) {
+                String verificationResponse = inputStream.nextLine();
+
+                if ("/verifyNickname ERROR".equals(verificationResponse)) {
+                    // Nickname is not valid, display an error message and prompt for a new nickname
+                    JOptionPane.showMessageDialog(this, "The chosen nickname is not valid. Please choose a different one.", "Error", JOptionPane.ERROR_MESSAGE);
+
+                    // Keep prompting for a new nickname until a valid one is entered
+                    while (true) {
+                        this.nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
+                        if (!nickname.trim().isEmpty()) {
+                            outputStream.println(nickname); // Send the new nickname to the server
+                            break;
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Nickname cannot be empty. Please choose a different one.");
+                        }
                     }
+
+                    // Recursively call connectToServer with the new nickname
+                    connectToServer();
+                } else {
+                    // Nickname is valid, start the thread to listen for incoming messages
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            while (inputStream.hasNextLine()) {
+                                String message = inputStream.nextLine();
+                                SwingUtilities.invokeLater(() -> chatArea.append(message + "\n"));
+                            }
+                        }
+                    }).start();
                 }
-            }).start();
+            } else {
+                // Handle the case where the server did not send any response
+                JOptionPane.showMessageDialog(this, "Server did not respond. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
     private void sendMessage() {
         String message = messageField.getText().trim();
 

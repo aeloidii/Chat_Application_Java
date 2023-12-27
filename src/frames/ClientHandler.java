@@ -19,8 +19,9 @@ public class ClientHandler implements Runnable {
     private PrintWriter outputStream;
     private Scanner inputStream;
     private String nickname;
+    private List<String> usedNicknames; // Add this line
 
-    public ClientHandler(Socket socket, List<ClientHandler> clients, String nickname) {
+    public ClientHandler(Socket socket, List<ClientHandler> clients, String nickname, List<String> usedNicknames) {
         this.clientSocket = socket;
         this.clients = clients;
 
@@ -29,12 +30,10 @@ public class ClientHandler implements Runnable {
             this.inputStream = new Scanner(socket.getInputStream());
             ClientHandler.dataInputStream = new DataInputStream(socket.getInputStream());
             this.nickname = nickname;
+            this.usedNicknames=usedNicknames;
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-    public String getNickname() {
-        return nickname;
     }
 
     @Override

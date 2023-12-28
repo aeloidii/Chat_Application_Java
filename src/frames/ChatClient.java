@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -63,6 +65,14 @@ public class ChatClient extends JFrame {
                 sendMessage();
             }
         });
+        messageField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    sendMessage();
+                }
+            }
+        });
 
         sendFileButton = new JButton("Send File");
         sendFileButton.setFont(new Font("Arial", Font.BOLD, 14));
@@ -118,10 +128,8 @@ public class ChatClient extends JFrame {
                         }
                     }
 
-                    // Recursively call connectToServer with the new nickname
                     connectToServer();
                 } else {
-                    // Nickname is valid, start the thread to listen for incoming messages
                     new Thread(new Runnable() {
                         @Override
                         public void run() {

@@ -6,13 +6,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
-
-import javax.swing.JOptionPane;
+import java.util.Map;
+import java.util.HashMap;
 
 public class ChatServer {
     private static final int PORT = 8888;
     private static List<ClientHandler> clients = new ArrayList<>();
-    private static List<String> usedNicknames = new ArrayList<>(); // Add this line
+    private static List<String> usedNicknames = new ArrayList<>();
+    private static Map<String, ClientHandler> nicknameToClientHandlerMap = new HashMap<>();
+    
 
     public static void main(String[] args) {
         try {
@@ -35,6 +37,7 @@ public class ChatServer {
 
                     ClientHandler clientHandler = new ClientHandler(clientSocket, clients, nickname, usedNicknames);
                     clients.add(clientHandler);
+                    nicknameToClientHandlerMap.put(nickname, clientHandler);
                     new Thread(clientHandler).start();
                     outputStream.println("/OK");
                     System.out.println("/added");

@@ -4,6 +4,9 @@ import java.io.*;
 import java.net.Socket;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Map;
+import java.util.HashMap;
+
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
@@ -19,6 +22,7 @@ public class ClientHandler implements Runnable {
     private Scanner inputStream;
     private String nickname;
     private List<String> usedNicknames;
+    private static Map<String, ClientHandler> nicknameToClientHandlerMap = new HashMap<>();
 
     public ClientHandler(Socket socket, List<ClientHandler> clients, String nickname, List<String> usedNicknames) {
         this.clientSocket = socket;
@@ -30,6 +34,8 @@ public class ClientHandler implements Runnable {
             ClientHandler.dataInputStream = new DataInputStream(socket.getInputStream());
             this.nickname = nickname;
             this.usedNicknames = usedNicknames;
+            
+            nicknameToClientHandlerMap.put(nickname, this);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -43,7 +49,20 @@ public class ClientHandler implements Runnable {
             while (inputStream.hasNextLine()) {
                 String message = inputStream.nextLine();
 
-                if (message.equals(FILE_SIGNAL)) {
+                if (message.startsWith("/private")) {
+                    String[] parts = message.split(" ", 3);
+                    String recipientNickname = parts[1];
+                    String privateMessage = parts[2];
+
+                    if (nicknameToClientHandlerMap.containsKey(recipientNickname)) {
+                        ClientHandler recipientHandler = nicknameToClientHandlerMap.get(recipientNickname);
+                        recipientHandler.sendMessage("(Private) " + nickname + ": " + privateMessage);
+                        sendMessage("(Private) to " + recipientNickname + ": " + privateMessage);
+                    } else {
+                        sendMessage("User " + recipientNickname + " not found or offline.");
+                    }
+                }
+                else if (message.equals(FILE_SIGNAL)) {
                     try {
                         String nameOfFile = inputStream.nextLine();
                         System.out.println("Creating the file !!");

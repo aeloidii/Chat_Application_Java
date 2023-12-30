@@ -56,7 +56,7 @@ public class ChatClient extends JFrame {
         JButton sendButton = new JButton("Send");
         sendButton.setFont(new Font("Arial", Font.BOLD, 14));
         sendButton.setForeground(Color.WHITE);
-        sendButton.setBackground(new Color(52, 152, 219)); // Use a cool color
+        sendButton.setBackground(new Color(52, 152, 219));
         sendButton.setFocusPainted(false);
         sendButton.setBorderPainted(false);
         sendButton.addActionListener(new ActionListener() {
@@ -77,7 +77,7 @@ public class ChatClient extends JFrame {
         sendFileButton = new JButton("Send File");
         sendFileButton.setFont(new Font("Arial", Font.BOLD, 14));
         sendFileButton.setForeground(Color.WHITE);
-        sendFileButton.setBackground(new Color(52, 152, 219)); // Use a cool color
+        sendFileButton.setBackground(new Color(52, 152, 219));
         sendFileButton.setFocusPainted(false);
         sendFileButton.setBorderPainted(false);
         sendFileButton.addActionListener(new ActionListener() {
@@ -106,22 +106,18 @@ public class ChatClient extends JFrame {
 
             dataOutputStream = new DataOutputStream(socket.getOutputStream());
 
-            // Send the chosen nickname to the server
             outputStream.println(nickname);
 
-            // Wait for the server's response
             if (inputStream.hasNextLine()) {
                 String verificationResponse = inputStream.nextLine();
 
                 if ("/verifyNickname ERROR".equals(verificationResponse)) {
-                    // Nickname is not valid, display an error message and prompt for a new nickname
                     JOptionPane.showMessageDialog(this, "The chosen nickname is not valid. Please choose a different one.", "Error", JOptionPane.ERROR_MESSAGE);
 
-                    // Keep prompting for a new nickname until a valid one is entered
                     while (true) {
                         this.nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
                         if (!nickname.trim().isEmpty()) {
-                            outputStream.println(nickname); // Send the new nickname to the server
+                            outputStream.println(nickname);
                             break;
                         } else {
                             JOptionPane.showMessageDialog(this, "Nickname cannot be empty. Please choose a different one.");
@@ -141,7 +137,6 @@ public class ChatClient extends JFrame {
                     }).start();
                 }
             } else {
-                // Handle the case where the server did not send any response
                 JOptionPane.showMessageDialog(this, "Server did not respond. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
             }
         } catch (IOException e) {

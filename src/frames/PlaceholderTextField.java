@@ -14,8 +14,6 @@ public class PlaceholderTextField extends JTextField {
 
     public PlaceholderTextField(String placeholder) {
         this.placeholder = placeholder;
-
-        // Add focus listener to restore placeholder text when field loses focus and is empty
         addFocusListener(new FocusListener() {
             @Override
             public void focusGained(FocusEvent e) {
@@ -39,8 +37,6 @@ public class PlaceholderTextField extends JTextField {
 
         if (getText().isEmpty() && !isFocusOwner()) {
             Font originalFont = g.getFont();
-            Font newFont = originalFont.deriveFont(Font.ITALIC);
-            g.setFont(newFont);
             g.setColor(Color.BLACK);
             int x = getInsets().left;
             int y = (getHeight() - g.getFontMetrics().getHeight()) / 2 + g.getFontMetrics().getAscent();

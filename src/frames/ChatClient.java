@@ -8,8 +8,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
 
 public class ChatClient extends JFrame {
@@ -33,19 +31,23 @@ public class ChatClient extends JFrame {
     
 
     public ChatClient() {
-    	while (true) {
-            this.nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
-            if (!nickname.trim().isEmpty()) {
-                    break;
-            }
-            else JOptionPane.showMessageDialog(this, "Already exists. Please choose a different one.");
+    	NicknameDialog nicknameDialog = new NicknameDialog(this);
+        nicknameDialog.setVisible(true);
+
+        if (!nicknameDialog.isNicknameEntered()) {
+            System.exit(0);
         }
+
+        this.nickname = nicknameDialog.getNickname();
     	
-        setTitle("Chat Client");
+        setTitle("4-GTR Chat");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 300);
         setLocationRelativeTo(null);
         setResizable(false);
+        
+        ImageIcon icon = new ImageIcon("C:\\Users\\ABDESSAMAD EL OIDII\\eclipse-workspace\\Chat_Application\\src\\imgs\\chaticon.png");
+        setIconImage(icon.getImage());
 
         chatArea = new JTextArea();
         chatArea.setEditable(false);
@@ -157,42 +159,51 @@ public class ChatClient extends JFrame {
 
 
     private void chooseAndSendFile() {
-        JFileChooser fileChooser = new JFileChooser();
-        int result = fileChooser.showOpenDialog(this);
+        JTextField recipientField = new JTextField();
+        Object[] message = {
+                "Recipient's Nickname:", recipientField
+        };
 
-        if (result == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = fileChooser.getSelectedFile();
-            sendFile(selectedFile);
+        int option = JOptionPane.showConfirmDialog(this, message, "Enter Recipient", JOptionPane.OK_CANCEL_OPTION);
+
+        if (option == JOptionPane.OK_OPTION) {
+            String recipientNickname = recipientField.getText().trim();
+            if (!recipientNickname.isEmpty()) {
+                JFileChooser fileChooser = new JFileChooser();
+                int result = fileChooser.showOpenDialog(this);
+
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    File selectedFile = fileChooser.getSelectedFile();
+                    sendFile(selectedFile, recipientNickname);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Recipient's nickname cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 
-    private void sendFile(File file) {            
-    		outputStream.println(file.getName());
-            
-            outputStream.println("/file");
-            outputStream.println(file.getName());
-            int bytes = 0;
-            System.out.println(file);
-            try {
-	            FileInputStream fileInputStream = new FileInputStream(file);
-	            
-	            // send file size
-	            dataOutputStream.writeLong(file.length());
-	            System.out.println("size to create : "+ file.length());
-	            // break file into chunks
-	            byte[] buffer = new byte[4*1024];
-	            while ((bytes=fileInputStream.read(buffer))!=-1){
-	                dataOutputStream.write(buffer,0,bytes);
-	                dataOutputStream.flush();
-	            }
-	            System.out.println("the file has been sent.");
-	            fileInputStream.close();
-            }catch(Exception e) {
-            	e.printStackTrace();
-            }
-    }
 
-    
+    private void sendFile(File file, String recipientNickname) {
+        outputStream.println("/file");
+        outputStream.println(file.getName());
+        outputStream.println(recipientNickname);
+        int bytes = 0;
+        try {
+            FileInputStream fileInputStream = new FileInputStream(file);
+
+            dataOutputStream.writeLong(file.length());
+            System.out.println("size to create : " + file.length());
+            byte[] buffer = new byte[4 * 1024];
+            while ((bytes = fileInputStream.read(buffer)) != -1) {
+                dataOutputStream.write(buffer, 0, bytes);
+                dataOutputStream.flush();
+            }
+            System.out.println("the file has been sent.");
+            fileInputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {

@@ -13,7 +13,6 @@ public class ChatServer {
     private static final int PORT = 8888;
     private static List<ClientHandler> clients = new ArrayList<>();
     private static List<String> usedNicknames = new ArrayList<>();
-    private static Map<String, ClientHandler> nicknameToClientHandlerMap = new HashMap<>();
     
 
     public static void main(String[] args) {
@@ -37,7 +36,6 @@ public class ChatServer {
 
                     ClientHandler clientHandler = new ClientHandler(clientSocket, clients, nickname, usedNicknames);
                     clients.add(clientHandler);
-                    nicknameToClientHandlerMap.put(nickname, clientHandler);
                     new Thread(clientHandler).start();
                     outputStream.println("/OK");
                     System.out.println("/added");

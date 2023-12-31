@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.Map;
 import java.util.HashMap;
+import java.awt.Color;
 
 import javax.swing.JFileChooser;
 
@@ -39,7 +40,6 @@ public class ClientHandler implements Runnable {
     @Override
     public void run() {
         try {
-        	broadcast(nickname + " has joined the chat.");
             while (inputStream.hasNextLine()) {
                 String message = inputStream.nextLine();
 

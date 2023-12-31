@@ -1,6 +1,12 @@
 package frames;
 
 import javax.swing.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -8,7 +14,11 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.net.Socket;
+import java.util.Map;
 import java.util.Scanner;
+
+import java.util.HashMap;
+
 
 public class ChatClient extends JFrame {
     /**
@@ -17,29 +27,31 @@ public class ChatClient extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private static final String SERVER_IP = "127.0.0.1";
     private static final int SERVER_PORT = 8888;
+    private static final String SERVER_PASSWORD = "chatappjava";
     private static DataOutputStream dataOutputStream = null;
 
     private Socket socket;
     private PrintWriter outputStream;
     private Scanner inputStream;
 
-    private JTextArea chatArea;
+    private JTextPane chatArea;
     private JTextField messageField;
     private String nickname;
     private JButton sendFileButton;
-    
+    private SimpleAttributeSet systemStyle;
+    private Map<String, SimpleAttributeSet> userStyles;
     
 
     public ChatClient() {
-    	NicknameDialog nicknameDialog = new NicknameDialog(this);
-        nicknameDialog.setVisible(true);
-
-        if (!nicknameDialog.isNicknameEntered()) {
-            System.exit(0);
-        }
-
-        this.nickname = nicknameDialog.getNickname();
+    	authenticateUser();
     	
+    	// Initialize styles
+        systemStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(systemStyle, Color.BLUE);
+
+        userStyles = new HashMap<>();
+        
+        
         setTitle("4-GTR Chat");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(400, 300);
@@ -49,7 +61,7 @@ public class ChatClient extends JFrame {
         ImageIcon icon = new ImageIcon("C:\\Users\\ABDESSAMAD EL OIDII\\eclipse-workspace\\Chat_Application\\src\\imgs\\chaticon.png");
         setIconImage(icon.getImage());
 
-        chatArea = new JTextArea();
+        chatArea = new JTextPane();
         chatArea.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(chatArea);
         add(scrollPane, BorderLayout.CENTER);
@@ -99,6 +111,27 @@ public class ChatClient extends JFrame {
 
         setVisible(true);
     }
+    private void authenticateUser() {
+        boolean authenticated = false;
+
+        while (!authenticated) {
+            String password = JOptionPane.showInputDialog(this, "Enter the password to join the chat:");
+
+            if (password != null && password.equals(SERVER_PASSWORD)) {
+                NicknameDialog nicknameDialog = new NicknameDialog(this);
+                nicknameDialog.setVisible(true);
+
+                if (!nicknameDialog.isNicknameEntered()) {
+                    System.exit(0);
+                }
+
+                this.nickname = nicknameDialog.getNickname();
+                authenticated = true;
+            } else {
+                JOptionPane.showMessageDialog(this, "Incorrect password. Please try again or cancel to exit.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
     private void connectToServer() {
         try {
@@ -131,12 +164,19 @@ public class ChatClient extends JFrame {
                     new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            while (inputStream.hasNextLine()) {
+                        	while (inputStream.hasNextLine()) {
                                 String message = inputStream.nextLine();
-                                SwingUtilities.invokeLater(() -> chatArea.append(message + "\n"));
+
+                                if (message.startsWith("/newUser")) {
+                                    String newUser = message.substring(8);
+                                    displaySystemMessage(newUser + " has joined the chat.");
+                                } else {
+                                    displayMessage(message);
+                                }
                             }
                         }
                     }).start();
+                    outputStream.println("new User has joined the chat : " + nickname);
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "Server did not respond. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
@@ -145,7 +185,46 @@ public class ChatClient extends JFrame {
             e.printStackTrace();
         }
     }
+    
+    private void displayMessage(String message) {
+        String[] parts = message.split(": ", 2);
+        if (parts.length == 2) {
+            String sender = parts[0];
+            String content = parts[1];
 
+            SimpleAttributeSet userStyle = userStyles.computeIfAbsent(sender, this::createUserStyle);
+
+            displayStyledText(chatArea, userStyle, sender + ": ");
+            displayStyledText(chatArea, null, content + "\n");
+        }
+    }
+
+    private SimpleAttributeSet createUserStyle(String username) {
+        SimpleAttributeSet userStyle = new SimpleAttributeSet();
+        StyleConstants.setForeground(userStyle, getRandomColor());
+        return userStyle;
+    }
+
+    private void displaySystemMessage(String message) {
+        displayStyledText(chatArea, systemStyle, message + "\n");
+    }
+
+    private void displayStyledText(JTextPane textPane, AttributeSet style, String text) {
+        StyledDocument doc = textPane.getStyledDocument();
+        try {
+            doc.insertString(doc.getLength(), text, style);
+        } catch (BadLocationException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private Color getRandomColor() {
+        int r = (int) (Math.random() * 256);
+        int g = (int) (Math.random() * 256);
+        int b = (int) (Math.random() * 256);
+        return new Color(r, g, b);
+    }
+    
     private void sendMessage() {
         String message = messageField.getText().trim();
 

@@ -1,3 +1,3 @@
-module Chat_Application {
+module chat_badr {
 	requires java.desktop;
 }

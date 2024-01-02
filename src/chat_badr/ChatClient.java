@@ -2,6 +2,7 @@ package chat_badr;
 
 import javax.swing.*;
 import javax.swing.text.*;
+
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
@@ -39,26 +40,42 @@ public class ChatClient extends JFrame {
 
         setTitle("Chat Client");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(400, 300);
+        setSize(500, 400);
         setLocationRelativeTo(null);
         setResizable(false);
+        
+        ImageIcon icon = new ImageIcon("C:\\Users\\ABDESSAMAD EL OIDII\\eclipse-workspace\\Chat_Application\\src\\imgs\\chaticon.png");
+        setIconImage(icon.getImage());
 
         // Set the background color of chatArea to black
         chatArea = new JTextPane();
         chatArea.setEditable(false);
-        chatArea.setBackground(Color.BLACK);  // Set background color of chatArea
+        chatArea.setBackground(new Color(0x121212));  // Set background color of chatArea
+        chatArea.setPreferredSize(new Dimension(500, chatArea.getPreferredSize().height));
 
-        // Add some spacing between bubble messages
-        chatArea.setMargin(new Insets(10, 10, 10, 10));
+	     // Add some spacing between bubble messages
+	    chatArea.setMargin(new Insets(10, 10, 10, 10));
+	
+	    JScrollPane scrollPane = new JScrollPane(chatArea);
+	    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
 
-        JScrollPane scrollPane = new JScrollPane(chatArea);
+        int scrollUnitIncrement = 15;
+        int scrollBlockIncrement = 50;
+
+        scrollPane.getVerticalScrollBar().setUnitIncrement(scrollUnitIncrement);
+        scrollPane.getVerticalScrollBar().setBlockIncrement(scrollBlockIncrement);
+        
+        scrollPane.getVerticalScrollBar().setUI(new CustomScrollBarUI());
+
+
         add(scrollPane, BorderLayout.CENTER);
 
         messageField = new PlaceholderTextField("message");
         JButton sendButton = new JButton("Send");
         sendButton.setFont(new Font("Arial", Font.BOLD, 14));
-        sendButton.setForeground(Color.WHITE);
-        sendButton.setBackground(new Color(52, 152, 219));
+        sendButton.setForeground(Color.black);
+        sendButton.setBackground(Color.WHITE);
         sendButton.setFocusPainted(false);
         sendButton.setBorderPainted(false);
         sendButton.addActionListener(e -> sendMessage());
@@ -73,16 +90,17 @@ public class ChatClient extends JFrame {
 
         sendFileButton = new JButton("Send File");
         sendFileButton.setFont(new Font("Arial", Font.BOLD, 14));
-        sendFileButton.setForeground(Color.WHITE);
-        sendFileButton.setBackground(new Color(52, 152, 219));
+        sendFileButton.setForeground(Color.black);
+        sendFileButton.setBackground(Color.WHITE);
         sendFileButton.setFocusPainted(false);
         sendFileButton.setBorderPainted(false);
         sendFileButton.addActionListener(e -> chooseAndSendFile());
 
         JPanel inputPanel = new JPanel(new BorderLayout());
+        inputPanel.add(sendFileButton, BorderLayout.WEST);
         inputPanel.add(messageField, BorderLayout.CENTER);
         inputPanel.add(sendButton, BorderLayout.EAST);
-        inputPanel.add(sendFileButton, BorderLayout.WEST);
+        
         add(inputPanel, BorderLayout.SOUTH);
 
         connectToServer();
@@ -91,41 +109,29 @@ public class ChatClient extends JFrame {
     }
 
     private void authenticateUser() {
-        int result;
-        
-        do {
+        boolean authenticated = false;
+
+        while (!authenticated) {
             String password = JOptionPane.showInputDialog(this, "Enter the password to join the chat:");
 
-            if (password == null) {
-                System.exit(0);
-            }
-
             if (password != null && password.equals(SERVER_PASSWORD)) {
-                this.nickname = JOptionPane.showInputDialog(this, "Enter your nickname:");
-                
-                if (this.nickname == null) {
+                NicknameDialog nicknameDialog = new NicknameDialog(this);
+                nicknameDialog.setVisible(true);
+
+                if (!nicknameDialog.isNicknameEntered()) {
                     System.exit(0);
                 }
-                
-                if (!nickname.trim().isEmpty()) {
-                    break;
-                } else {
-                    JOptionPane.showMessageDialog(this, "Nickname cannot be empty. Please choose a different one.");
-                }
-            } else {
-                result = JOptionPane.showConfirmDialog(
-                        this,
-                        "Incorrect password. Do you want to try again?",
-                        "Error",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.ERROR_MESSAGE
-                );
 
-                if (result == JOptionPane.NO_OPTION) {
+                this.nickname = nicknameDialog.getNickname();
+                authenticated = true;
+            } else {
+                int option = JOptionPane.showConfirmDialog(this, "Incorrect password. Try in different time :)", "Error", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE);
+
+                if (option == JOptionPane.YES_OPTION) {
                     System.exit(0);
                 }
             }
-        } while (true);
+        }
     }
 
 
@@ -197,7 +203,6 @@ public class ChatClient extends JFrame {
     }
 
     private void displayPrivateMessage(String message) {
-        // Extract sender and content from the private message
         String[] parts = message.split(": ", 2);
         if (parts.length == 2) {
             String sender = parts[0].substring("(Private) ".length());
@@ -211,24 +216,21 @@ public class ChatClient extends JFrame {
     }
 
     private void addMessagePanelToChatArea(JPanel messagePanel) {
-        // Append a newline before the message
-        displayStyledText(chatArea, systemStyle, "\n");
-        
-        // Get the document and insert the message panel as an element
         StyledDocument doc = chatArea.getStyledDocument();
+
+        // Insert a newline before the message
         try {
-            doc.insertString(doc.getLength(), " ", null); // Insert a space to ensure proper line spacing
-            doc.insertString(doc.getLength(), "\n", null); // Insert a newline before the message
-            doc.insertString(doc.getLength(), " ", null); // Insert another space for line spacing
-            doc.insertString(doc.getLength(), " ", null); // Insert another space for line spacing
-            doc.insertString(doc.getLength(), " ", null); // Insert another space for line spacing
-            chatArea.insertComponent(messagePanel);
-            chatArea.setCaretPosition(chatArea.getDocument().getLength());
-            chatArea.repaint();
+            doc.insertString(doc.getLength(), "\n", null);
         } catch (BadLocationException e) {
             e.printStackTrace();
         }
+
+        // Insert the message panel as an element
+        chatArea.insertComponent(messagePanel);
+        chatArea.setCaretPosition(chatArea.getDocument().getLength());
+        chatArea.repaint();
     }
+
 
     private JPanel createMessagePanel(String sender, String content, SimpleAttributeSet userStyle) {
         JPanel messagePanel = new JPanel(new BorderLayout());
@@ -252,11 +254,23 @@ public class ChatClient extends JFrame {
     }
 
 
+
     private SimpleAttributeSet createUserStyle(String username) {
         SimpleAttributeSet userStyle = new SimpleAttributeSet();
+        
+        
+        Font font = new Font("Arial", Font.PLAIN, 12);
+        StyleConstants.setFontFamily(userStyle, font.getFamily());
+        StyleConstants.setFontSize(userStyle, font.getSize());
+        StyleConstants.setBold(userStyle, font.isBold());
+        StyleConstants.setItalic(userStyle, font.isItalic());
+
+        
         StyleConstants.setForeground(userStyle, getRandomColor());
+
         return userStyle;
     }
+
 
     private void displaySystemMessage(String message) {
         displayStyledText(chatArea, systemStyle, message + "\n");

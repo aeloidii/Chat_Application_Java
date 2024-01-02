@@ -1,4 +1,4 @@
-package chat_badr;
+package chat;
 
 //ChatServer.java
 

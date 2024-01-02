@@ -1,4 +1,4 @@
-package chat_badr;
+package chat;
 
 import javax.swing.*;
 import javax.swing.text.*;
